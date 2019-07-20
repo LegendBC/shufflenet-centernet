@@ -54,5 +54,9 @@ def demo(opt):
         time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
       print(time_str)
 if __name__ == '__main__':
-  opt = opts().init()
+  #opt = opts().init()
+  opt = opts().parse()
+  Dataset = get_dataset(opt.dataset, opt.task)
+  opt = opts().update_dataset_info_and_set_heads(opt, Dataset)
+  #import pdb;pdb.set_trace()
   demo(opt)
