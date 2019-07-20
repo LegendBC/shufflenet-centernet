@@ -106,6 +106,7 @@ class ShuffleUnit(nn.Module):
         self.depthwise_conv3x3 = conv3x3(
             self.bottleneck_channels, self.bottleneck_channels,
             stride=self.depthwise_stride, groups=self.bottleneck_channels)
+            #stride=1, groups=self.bottleneck_channels) 
         self.bn_after_depthwise = nn.BatchNorm2d(self.bottleneck_channels)
 
         # Use 1x1 grouped convolution to expand from 
@@ -150,8 +151,11 @@ class ShuffleUnit(nn.Module):
 
 
     def forward(self, x):
+        #import pdb
+        #pdb.set_trace()
         # save for combining later with output
         residual = x
+        #residual = self.g_conv_1x1_expand(residual)
 
         if self.combine == 'concat':
             residual = F.avg_pool2d(residual, kernel_size=3, 
@@ -191,9 +195,11 @@ class ShuffleNet(nn.Module):
                 is 1000 for ImageNet.
         """
         super(ShuffleNet, self).__init__()
-
+        #import pdb
+        #pdb.set_trace()
         self.groups = groups
         self.stage_repeats = [3, 7, 3]
+        #self.stage_repeats = [1, 2, 1]
         self.in_channels =  in_channels
         self.num_classes = num_classes
         self.heads = heads
@@ -232,14 +238,14 @@ class ShuffleNet(nn.Module):
         # shape inference if input size is not ImageNet's 224x224
 
         # Fully-connected classification layer
-        num_inputs = self.stage_out_channels[-1]
-        self.fc = nn.Linear(num_inputs, self.num_classes)
+        #num_inputs = self.stage_out_channels[-1]
+        #self.fc = nn.Linear(num_inputs, self.num_classes)
 
         for head in self.heads:
             classes = self.heads[head]
             if head_conv > 0:
                 fc = nn.Sequential(
-                  nn.Conv2d(64, head_conv,
+                  nn.Conv2d(240, head_conv,
                     kernel_size=3, padding=1, bias=True),
                   nn.ReLU(inplace=True),
                   nn.Conv2d(head_conv, classes, 
@@ -250,7 +256,7 @@ class ShuffleNet(nn.Module):
                 else:
                     fill_fc_weights(fc)
             else:
-                fc = nn.Conv2d(64, classes, 
+                fc = nn.Conv2d(240, classes, 
                   kernel_size=1, stride=1, 
                   padding=0, bias=True)
                 if 'hm' in head:
@@ -271,15 +277,25 @@ class ShuffleNet(nn.Module):
         grouped_conv = stage > 2
         
         # 2. concatenation unit is always used.
-        first_module = ShuffleUnit(
-            self.stage_out_channels[stage-1],
-            self.stage_out_channels[stage],
-            groups=self.groups,
-            grouped_conv=grouped_conv,
-            combine='concat'
-            )
-        modules[stage_name+"_0"] = first_module
-
+        if stage == 2:
+          first_module = ShuffleUnit(
+              self.stage_out_channels[stage-1],
+              self.stage_out_channels[stage],
+              groups=self.groups,
+              grouped_conv=grouped_conv,
+              combine='concat'
+              )
+          modules[stage_name+"_0"] = first_module
+        else:
+          in_channels = self.stage_out_channels[stage-1]//4
+          first_module = ShuffleUnit(
+              in_channels,
+              self.stage_out_channels[stage],
+              groups=self.groups,
+              grouped_conv=grouped_conv,
+              combine='concat'
+              )
+          modules[stage_name+"_0"] = first_module
         # add more ShuffleUnits depending on pre-defined number of repeats
         for i in range(self.stage_repeats[stage-2]):
             name = stage_name + "_{}".format(i+1)
@@ -296,20 +312,27 @@ class ShuffleNet(nn.Module):
 
 
     def forward(self, x):
+        #import pdb
+        #pdb.set_trace()
+        ps = nn.PixelShuffle(2)
         x = self.conv1(x)
         x = self.maxpool(x)
 
         x = self.stage2(x)
+        x=ps(x)
         x = self.stage3(x)
+        x=ps(x)
         x = self.stage4(x)
-
+        x=ps(x)
+  
         # global average pooling layer
-        x = F.avg_pool2d(x, x.data.size()[-2:])
-        
+        #x = F.avg_pool2d(x, x.data.size()[-2:])
+        #import pdb
+        #pdb.set_trace()
         # flatten for input to fully-connected layer
-        x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        x = F.log_softmax(x, dim=1)
+        #x = x.view(x.size(0), -1)
+        #x = self.fc(x)
+        #x = F.log_softmax(x, dim=1)
         ret = {}
         for head in self.heads:
             ret[head] = self.__getattr__(head)(x)

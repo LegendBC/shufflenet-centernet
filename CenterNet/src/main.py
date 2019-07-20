@@ -67,6 +67,8 @@ def main(opt):
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):
     mark = epoch if opt.save_all else 'last'
+    #import pdb
+    #pdb.set_trace()
     log_dict_train, _ = trainer.train(epoch, train_loader)
     logger.write('epoch: {} |'.format(epoch))
     for k, v in log_dict_train.items():

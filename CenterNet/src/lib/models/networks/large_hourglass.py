@@ -186,7 +186,8 @@ class exkp(nn.Module):
         kp_layer=residual
     ):
         super(exkp, self).__init__()
-
+        #import pdb
+        #pdb.set_trace()
         self.nstack    = nstack
         self.heads     = heads
 
@@ -251,6 +252,8 @@ class exkp(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, image):
+        #import pdb
+        #pdb.set_trace()
         # print('image shape', image.shape)
         inter = self.pre(image)
         outs  = []
@@ -296,5 +299,7 @@ class HourglassNet(exkp):
         )
 
 def get_large_hourglass_net(num_layers, heads, head_conv):
+  #import pdb
+  #pdb.set_trace()
   model = HourglassNet(heads, 2)
   return model

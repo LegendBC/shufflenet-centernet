@@ -16,6 +16,8 @@ class ModleWithLoss(torch.nn.Module):
     self.loss = loss
   
   def forward(self, batch):
+    #import pdb
+    #pdb.set_trace()
     outputs = self.model(batch['input'])
     loss, loss_stats = self.loss(outputs, batch)
     return outputs[-1], loss, loss_stats
