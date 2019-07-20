@@ -79,6 +79,7 @@ class Debugger(object):
       bg * (1 - trans)).astype(np.uint8)
   
   def show_img(self, pause = False, imgId = 'default'):
+    import pdb; pdb.set_trace()
     cv2.imshow('{}'.format(imgId), self.imgs[imgId])
     if pause:
       cv2.waitKey()
@@ -213,8 +214,13 @@ class Debugger(object):
                    3, (int(c[0]), int(c[1]), int(c[2])), -1)
 
   def show_all_imgs(self, pause=False, time=0):
-    if not self.ipynb:
+    #import pdb; pdb.set_trace()
+    if self.ipynb:
+      #index=0
       for i, v in self.imgs.items():
+        #index+=1
+        #print('save /root/lbc/voc_detect{}{}.jpg'.format(i,index))
+        cv2.imwrite('/root/lbc/voc_detect{}{}.jpg'.format(i),v)
         cv2.imshow('{}'.format(i), v)
       if cv2.waitKey(0 if pause else 1) == 27:
         import sys
@@ -245,6 +251,7 @@ class Debugger(object):
       prefix=idx
       np.savetxt(path + '/id.txt', np.ones(1) * (idx + 1), fmt='%d')
     for i, v in self.imgs.items():
+      #import pdb; pdb.set_trace()
       cv2.imwrite(path + '/{}{}.png'.format(prefix, i), v)
 
   def remove_side(self, img_id, img):

@@ -16,6 +16,7 @@ time_stats = ['tot', 'load', 'pre', 'net', 'dec', 'post', 'merge']
 
 def demo(opt):
   os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpus_str
+  #import pdb;pdb.set_trace()
   opt.debug = max(opt.debug, 1)
   Detector = detector_factory[opt.task]
   detector = Detector(opt)
@@ -46,6 +47,7 @@ def demo(opt):
       image_names = [opt.demo]
     
     for (image_name) in image_names:
+      #import pdb; pdb.set_trace()
       ret = detector.run(image_name)
       time_str = ''
       for stat in time_stats:
