@@ -218,7 +218,7 @@ class PoseResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-
+        import pdb; pdb.set_trace()
         x = self.deconv_layers(x)
         ret = {}
         for head in self.heads:
