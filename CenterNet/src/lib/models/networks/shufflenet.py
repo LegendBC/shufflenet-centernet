@@ -199,7 +199,7 @@ class ShuffleNet(nn.Module):
         #import pdb
         #pdb.set_trace()
         self.groups = groups
-        self.stage_repeats = [2, 3, 2]
+        self.stage_repeats = [1, 2, 1]
         #self.stage_repeats = [1, 2, 1]
         self.in_channels =  in_channels
         self.num_classes = num_classes
@@ -224,8 +224,8 @@ class ShuffleNet(nn.Module):
         # Stage 1 always has 24 output channels
         self.conv1 = conv3x3(self.in_channels,
                              self.stage_out_channels[1], # stage 1
-                             stride=1)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
+                             stride=2)
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # Stage 2
         self.stage2 = self._make_stage(2)
