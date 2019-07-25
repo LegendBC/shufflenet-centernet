@@ -209,6 +209,7 @@ class PoseResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        import pdb; pdb.set_trace()
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -218,7 +219,7 @@ class PoseResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         x = self.deconv_layers(x)
         ret = {}
         for head in self.heads:
