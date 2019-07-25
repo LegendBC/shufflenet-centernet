@@ -14,7 +14,8 @@ from models.data_parallel import DataParallel
 from logger import Logger
 from datasets.dataset_factory import get_dataset
 from trains.train_factory import train_factory
-
+from tensorboardX import SummaryWriter
+#from torch.utils.tensorboard import SummaryWriter
 
 def main(opt):
   torch.manual_seed(opt.seed)
@@ -35,6 +36,9 @@ def main(opt):
   if opt.load_model != '':
     model, optimizer, start_epoch = load_model(
       model, opt.load_model, optimizer, opt.resume, opt.lr, opt.lr_step)
+
+  #import pdb;pdb.set_trace()
+
 
   Trainer = train_factory[opt.task]
   trainer = Trainer(opt, model, optimizer)
@@ -62,7 +66,15 @@ def main(opt):
       pin_memory=True,
       drop_last=True
   )
-
+  #tensor board visulization
+  #import pdb; pdb.set_trace()
+  #writer = SummaryWriter('./Result')
+  #images, labels = next(iter(train_loader))
+  #grid = torchvision.utils.make_grid(images)
+  #writer.add_image('images', grid, 0)
+  #writer.add_graph(model, torch.rand([10,3,512,512]))
+  #writer.close()
+  
   print('Starting training...')
   best = 1e10
   for epoch in range(start_epoch + 1, opt.num_epochs + 1):

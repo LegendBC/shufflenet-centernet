@@ -9,7 +9,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from collections import OrderedDict
 from torch.nn import init
-
+from tensorboardX import SummaryWriter
+#from torchviz import make_dot, make_dot_from_trace
 
 def conv3x3(in_channels, out_channels, stride=1, 
             padding=1, bias=True, groups=1):    
@@ -198,7 +199,7 @@ class ShuffleNet(nn.Module):
         #import pdb
         #pdb.set_trace()
         self.groups = groups
-        self.stage_repeats = [3, 7, 3]
+        self.stage_repeats = [1, 2, 1]
         #self.stage_repeats = [1, 2, 1]
         self.in_channels =  in_channels
         self.num_classes = num_classes
@@ -245,7 +246,7 @@ class ShuffleNet(nn.Module):
             classes = self.heads[head]
             if head_conv > 0:
                 fc = nn.Sequential(
-                  nn.Conv2d(240, head_conv,
+                  nn.Conv2d(960, head_conv,
                     kernel_size=3, padding=1, bias=True),
                   nn.ReLU(inplace=True),
                   nn.Conv2d(head_conv, classes, 
@@ -256,7 +257,7 @@ class ShuffleNet(nn.Module):
                 else:
                     fill_fc_weights(fc)
             else:
-                fc = nn.Conv2d(240, classes, 
+                fc = nn.Conv2d(960, classes, 
                   kernel_size=1, stride=1, 
                   padding=0, bias=True)
                 if 'hm' in head:
@@ -277,26 +278,16 @@ class ShuffleNet(nn.Module):
         grouped_conv = stage > 2
         
         # 2. concatenation unit is always used.
-        if stage == 2:
-          first_module = ShuffleUnit(
-              self.stage_out_channels[stage-1],
-              self.stage_out_channels[stage],
-              groups=self.groups,
-              grouped_conv=grouped_conv,
-              combine='concat'
-              )
-          modules[stage_name+"_0"] = first_module
-        else:
-          in_channels = self.stage_out_channels[stage-1]//4
-          first_module = ShuffleUnit(
-              in_channels,
-              self.stage_out_channels[stage],
-              groups=self.groups,
-              grouped_conv=grouped_conv,
-              combine='concat'
-              )
-          modules[stage_name+"_0"] = first_module
-        # add more ShuffleUnits depending on pre-defined number of repeats
+        in_channels = self.stage_out_channels[stage-1]
+        first_module = ShuffleUnit(
+             in_channels,
+             self.stage_out_channels[stage],
+             groups=self.groups,
+             grouped_conv=grouped_conv,
+             combine='concat'
+           )
+        modules[stage_name+"_0"] = first_module
+        #add more ShuffleUnits depending on pre-defined number of repeats
         for i in range(self.stage_repeats[stage-2]):
             name = stage_name + "_{}".format(i+1)
             module = ShuffleUnit(
@@ -312,27 +303,14 @@ class ShuffleNet(nn.Module):
 
 
     def forward(self, x):
-        #import pdb
-        #pdb.set_trace()
-        ps = nn.PixelShuffle(2)
+        #import pdb; pdb.set_trace()
+        #ps = nn.PixelShuffle(2)
         x = self.conv1(x)
         x = self.maxpool(x)
 
         x = self.stage2(x)
-        x=ps(x)
         x = self.stage3(x)
-        x=ps(x)
         x = self.stage4(x)
-        x=ps(x)
-  
-        # global average pooling layer
-        #x = F.avg_pool2d(x, x.data.size()[-2:])
-        #import pdb
-        #pdb.set_trace()
-        # flatten for input to fully-connected layer
-        #x = x.view(x.size(0), -1)
-        #x = self.fc(x)
-        #x = F.log_softmax(x, dim=1)
         ret = {}
         for head in self.heads:
             ret[head] = self.__getattr__(head)(x)
@@ -341,9 +319,20 @@ class ShuffleNet(nn.Module):
 
 
 # if __name__ == "__main__":
-#     """Testing
-#     """
-#     model = ShuffleNet()
+#      """Testing
+#      """
+#      import pdb;pdb.set_trace()
+
+#      heads = {'hm':5,'wh':2, 'reg':2}
+#      model = ShuffleNet(heads, head_conv=64)
+#      inputs = Variable(torch.rand(torch.Size([1, 3, 128, 128])))
+#      outputs = model(inputs)
+#      make_dot(outputs)
+#      print(model)
+#     #  writer = SummaryWriter('./modelgraph')
+#     #  with writer:
+#     #      writer.add_graph(model,input_to_model=torch.rand(1,3,32,32))
+     
 
 def get_shuffle_net(num_layers, heads, head_conv):
   model = ShuffleNet(heads, head_conv)

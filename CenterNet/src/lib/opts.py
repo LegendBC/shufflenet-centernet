@@ -295,7 +295,7 @@ class opts(object):
     opt.output_w = opt.input_w // opt.down_ratio
     opt.input_res = max(opt.input_h, opt.input_w)
     opt.output_res = max(opt.output_h, opt.output_w)
-    
+    #import pdb; pdb.set_trace()
     if opt.task == 'exdet':
       # assert opt.dataset in ['coco']
       num_hm = 1 if opt.agnostic_ex else opt.num_classes
