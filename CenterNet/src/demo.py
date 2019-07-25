@@ -9,7 +9,7 @@ import cv2
 
 from opts import opts
 from detectors.detector_factory import detector_factory
-
+from datasets.dataset_factory import get_dataset
 image_ext = ['jpg', 'jpeg', 'png', 'webp']
 video_ext = ['mp4', 'mov', 'avi', 'mkv']
 time_stats = ['tot', 'load', 'pre', 'net', 'dec', 'post', 'merge']
@@ -54,5 +54,9 @@ def demo(opt):
         time_str = time_str + '{} {:.3f}s |'.format(stat, ret[stat])
       print(time_str)
 if __name__ == '__main__':
-  opt = opts().init()
+  #opt = opts().init()
+  opt = opts().parse()
+  Dataset = get_dataset(opt.dataset, opt.task)
+  opt = opts().update_dataset_info_and_set_heads(opt, Dataset)
+  #import pdb;pdb.set_trace()
   demo(opt)
