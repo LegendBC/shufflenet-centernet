@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 from torch.nn import init
 import math
-
+BN_MOMENTUM = 0.1
 def conv_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -114,10 +114,11 @@ class InvertedResidual(nn.Module):
 class ShuffleNetV2(nn.Module):
     def __init__(self,heads, head_conv, n_class=1000, input_size=224, width_mult=1.):
         super(ShuffleNetV2, self).__init__()
-        
+        self.inplanes = 24
         assert input_size % 32 == 0
-        
-        self.stage_repeats = [2, 3, 2]
+        self.deconv_with_bias = False
+        self.stage_repeats = [4, 8, 4]
+        #self.stage_repeats = [2, 3, 2]
         # index 0 is invalid and should never be called.
         # only used for indexing convenience.
         if width_mult == 0.5:
@@ -138,7 +139,6 @@ class ShuffleNetV2(nn.Module):
         self.conv1 = conv_bn(3, input_channel, 2)    
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1) 
         self.features = []
-        self.heads = heads
         # building inverted residual blocks
         for idxstage in range(len(self.stage_repeats)):
             numrepeat = self.stage_repeats[idxstage]
@@ -146,19 +146,30 @@ class ShuffleNetV2(nn.Module):
             for i in range(numrepeat):
                 if i == 0:
 	            #inp, oup, stride, benchmodel):
-                    self.features.append(InvertedResidual(input_channel, output_channel, 1, 2))
+                    self.features.append(InvertedResidual(input_channel, output_channel, 2, 2))
                 else:
                     self.features.append(InvertedResidual(input_channel, output_channel, 1, 1))
                 input_channel = output_channel
+                self.inplanes = output_channel
                 
                 
         # make it nn.Sequential
         self.features = nn.Sequential(*self.features)
+
+        # used for deconv layers
+        self.deconv_layers = self._make_deconv_layer(
+            3,
+            [256, 256, 256],
+            [4, 4, 4],
+        )        
+
+        # add heads
+        self.heads = heads
         for head in self.heads:
             classes = self.heads[head]
             if head_conv > 0:
                 fc = nn.Sequential(
-                  nn.Conv2d(464, head_conv,
+                  nn.Conv2d(256, head_conv,
                     kernel_size=3, padding=1, bias=True),
                   nn.ReLU(inplace=True),
                   nn.Conv2d(head_conv, classes, 
@@ -169,7 +180,7 @@ class ShuffleNetV2(nn.Module):
                 else:
                     fill_fc_weights(fc)
             else:
-                fc = nn.Conv2d(464, classes, 
+                fc = nn.Conv2d(256, classes, 
                   kernel_size=1, stride=1, 
                   padding=0, bias=True)
                 if 'hm' in head:
@@ -179,17 +190,62 @@ class ShuffleNetV2(nn.Module):
             self.__setattr__(head, fc)
 
         # building last several layers
-        self.conv_last      = conv_1x1_bn(input_channel, self.stage_out_channels[-1])
-        self.globalpool = nn.Sequential(nn.AvgPool2d(int(input_size/32)))              
+        # self.conv_last      = conv_1x1_bn(input_channel, self.stage_out_channels[-1])
+        # self.globalpool = nn.Sequential(nn.AvgPool2d(int(input_size/32)))              
     
-	      # building classifier
-        self.classifier = nn.Sequential(nn.Linear(self.stage_out_channels[-1], n_class))
+	    #   # building classifier
+        # self.classifier = nn.Sequential(nn.Linear(self.stage_out_channels[-1], n_class))
 
+    def _get_deconv_cfg(self, deconv_kernel, index):
+        if deconv_kernel == 4:
+            padding = 1
+            output_padding = 0
+        elif deconv_kernel == 3:
+            padding = 1
+            output_padding = 1
+        elif deconv_kernel == 2:
+            padding = 0
+            output_padding = 0
+
+        return deconv_kernel, padding, output_padding
+
+        # self.deconv_layers = self._make_deconv_layer(
+        #     3,
+        #     [256, 256, 256],
+        #     [4, 4, 4],
+        # )
+    def _make_deconv_layer(self, num_layers, num_filters, num_kernels):
+        assert num_layers == len(num_filters), \
+            'ERROR: num_deconv_layers is different len(num_deconv_filters)'
+        assert num_layers == len(num_kernels), \
+            'ERROR: num_deconv_layers is different len(num_deconv_filters)'
+
+        layers = []
+        for i in range(num_layers):
+            kernel, padding, output_padding = \
+                self._get_deconv_cfg(num_kernels[i], i)
+
+            planes = num_filters[i]
+            layers.append(
+                nn.ConvTranspose2d(
+                    in_channels=self.inplanes,
+                    out_channels=planes,
+                    kernel_size=kernel,
+                    stride=2,
+                    padding=padding,
+                    output_padding=output_padding,
+                    bias=self.deconv_with_bias))
+            layers.append(nn.BatchNorm2d(planes))
+            layers.append(nn.ReLU(inplace=True))
+            self.inplanes = planes
+
+        return nn.Sequential(*layers)
     def forward(self, x):
         #import pdb; pdb.set_trace()
         x = self.conv1(x)
         x = self.maxpool(x)
         x = self.features(x)
+        x = self.deconv_layers(x)
         ret = {}
         for head in self.heads:
             ret[head] = self.__getattr__(head)(x)
