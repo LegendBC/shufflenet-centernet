@@ -14,6 +14,8 @@ from .networks.dlav0 import get_pose_net as get_dlav0
 from .networks.large_hourglass import get_large_hourglass_net
 from .networks.shufflenet import get_shuffle_net
 from .networks.shufflenetv2 import get_shufflev2_net
+from .networks.shufflenetv2p import get_shufflev2p_net
+#from .networks.shufflenetv2_dcn import get_shufflev2_net as get_shufflev2_net_dcn
 _model_factory = {
   'res': get_pose_net, # default Resnet with deconv
   'dlav0': get_dlav0, # default DLAup
@@ -21,7 +23,10 @@ _model_factory = {
   #'resdcn': get_pose_net_dcn,
   'hourglass': get_large_hourglass_net,
   'shufflenet': get_shuffle_net,
-  'shufflenetv2': get_shufflev2_net
+  'shufflenetv2': get_shufflev2_net,
+  'shufflenetv2p': get_shufflev2p_net,
+  #'shufflenetv2dcn':get_shufflev2_net_dcn
+
 }
 
 def create_model(arch, heads, head_conv):
