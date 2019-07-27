@@ -164,7 +164,7 @@ class ShuffleNetV2(nn.Module):
         # used for deconv layers
         self.deconv_layers = self._make_deconv_layer(
             3,
-            [512, 256, 256],
+            [512, 256, 128],
             [4, 4, 4],
         )        
 
@@ -174,7 +174,7 @@ class ShuffleNetV2(nn.Module):
             classes = self.heads[head]
             if head_conv > 0:
                 fc = nn.Sequential(
-                  nn.Conv2d(256, head_conv,
+                  nn.Conv2d(128, head_conv,
                     kernel_size=3, padding=1, bias=True),
                   nn.ReLU(inplace=True),
                   nn.Conv2d(head_conv, classes, 
@@ -185,7 +185,7 @@ class ShuffleNetV2(nn.Module):
                 else:
                     fill_fc_weights(fc)
             else:
-                fc = nn.Conv2d(256, classes, 
+                fc = nn.Conv2d(128, classes, 
                   kernel_size=1, stride=1, 
                   padding=0, bias=True)
                 if 'hm' in head:
