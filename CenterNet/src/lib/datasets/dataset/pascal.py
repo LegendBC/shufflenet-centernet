@@ -13,10 +13,16 @@ import torch.utils.data as data
 class PascalVOC(data.Dataset):
   num_classes = 20
   default_resolution = [384, 384]
-  mean = np.array([0.485, 0.456, 0.406],
+  #pascal RGB format
+  # mean = np.array([0.485, 0.456, 0.406],
+  #                  dtype=np.float32).reshape(1, 1, 3)
+  # std  = np.array([0.229, 0.224, 0.225],
+  #                  dtype=np.float32).reshape(1, 1, 3)
+  #should be BGR format
+  mean = np.array([0.406, 0.456, 0.485],
                    dtype=np.float32).reshape(1, 1, 3)
-  std  = np.array([0.229, 0.224, 0.225],
-                   dtype=np.float32).reshape(1, 1, 3)
+  std  = np.array([0.225, 0.224, 0.229],
+                   dtype=np.float32).reshape(1, 1, 3) 
   
   def __init__(self, opt, split):
     super(PascalVOC, self).__init__()
