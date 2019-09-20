@@ -86,7 +86,11 @@ def main(opt):
     for k, v in log_dict_train.items():
       logger.scalar_summary('train_{}'.format(k), v, epoch)
       logger.write('{} {:8f} | '.format(k, v))
+    if epoch > 100 and epoch %10 == 0:
+      save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(epoch)), 
+                 epoch, model, optimizer)
     if opt.val_intervals > 0 and epoch % opt.val_intervals == 0:
+    #if epoch > 30 and epoch % 20 == 0:
       save_model(os.path.join(opt.save_dir, 'model_{}.pth'.format(mark)), 
                  epoch, model, optimizer)
       with torch.no_grad():

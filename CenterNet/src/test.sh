@@ -1,0 +1,1 @@
+ python main.py ctdet --exp_id pascal_shv2down16v4 --dataset pascal  --num_epoch 600 --lr_step 80,120 --gpus 1 --arch shufflenetv2pdown16v4 --val_intervals 10000 --num_workers 0 --down_ratio 16 --resume

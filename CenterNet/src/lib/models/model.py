@@ -16,6 +16,15 @@ from .networks.shufflenet import get_shuffle_net
 from .networks.shufflenetv2 import get_shufflev2_net
 from .networks.shufflenetv2p import get_shufflev2p_net
 #from .networks.shufflenetv2_dcn import get_shufflev2_net as get_shufflev2_net_dcn
+from .networks.shufflenetv2p_down16_4 import get_shufflev2p_net as get_shufflev2p_net_down16_4
+from .networks.shufflenetv2p_down8_1 import get_shufflev2p_net as get_shufflev2p_net_down8_1
+from .networks.shufflenetv2p_down16_5 import get_shufflev2p_net as get_shufflev2p_net_down16_5
+from .networks.shufflenetv2p_down8_2 import get_shufflev2p_net as get_shufflev2p_net_down8_2
+from .networks.shufflenetv2p_down8_3 import get_shufflev2p_net as get_shufflev2p_net_down8_3
+from .networks.shufflenetv2p_down16_6 import get_shufflev2p_net as get_shufflev2p_net_down16_6
+from .networks.shufflenetv2p_down8_4 import get_shufflev2p_net as get_shufflev2p_net_down8_4
+from .networks.shufflenetv2p_down8_5 import get_shufflev2p_net as get_shufflev2p_net_down8_5
+from .networks.shufflenetv2p_down16_7 import get_shufflev2p_net as get_shufflev2p_net_down16_7
 _model_factory = {
   'res': get_pose_net, # default Resnet with deconv
   'dlav0': get_dlav0, # default DLAup
@@ -26,7 +35,15 @@ _model_factory = {
   'shufflenetv2': get_shufflev2_net,
   'shufflenetv2p': get_shufflev2p_net,
   #'shufflenetv2dcn':get_shufflev2_net_dcn
-
+  'shufflenetv2pdown16v4': get_shufflev2p_net_down16_4, #based on v3 add conv last and decrease deconv kernel
+  'shufflenetv2pdown8v1': get_shufflev2p_net_down8_1,
+  'shufflenetv2pdown16v5': get_shufflev2p_net_down16_5,
+  'shufflenetv2pdown8v2': get_shufflev2p_net_down8_2,
+  'shufflenetv2pdown8v3': get_shufflev2p_net_down8_3,
+  'shufflenetv2pdown16v6': get_shufflev2p_net_down16_6,
+  'shufflenetv2pdown8v4': get_shufflev2p_net_down8_4,
+  'shufflenetv2pdown8v5': get_shufflev2p_net_down8_5,
+  'shufflenetv2pdown16v7': get_shufflev2p_net_down16_7,
 }
 
 def create_model(arch, heads, head_conv):
